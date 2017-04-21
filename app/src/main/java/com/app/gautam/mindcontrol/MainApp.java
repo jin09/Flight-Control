@@ -1,14 +1,11 @@
 package com.app.gautam.mindcontrol;
 
-import android.nfc.Tag;
 import android.support.v7.app.AppCompatActivity;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,9 +14,7 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.widget.TextView;
+
 
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -29,18 +24,23 @@ import com.google.firebase.database.ValueEventListener;
 import app.akexorcist.bluetotohspp.library.BluetoothSPP;
 import app.akexorcist.bluetotohspp.library.BluetoothState;
 import app.akexorcist.bluetotohspp.library.DeviceList;
+
 /**
  * Created by gautam on 30-01-2017.
  */
+
 public class MainApp extends AppCompatActivity {
     private static final String TAG = "MAINAPP";
     TextView textView;
     DatabaseReference databaseReference = FirebaseDatabase.getInstance().getReference();
     DatabaseReference syncref = databaseReference.child("last");
+    DatabaseReference connectionTypeReference = databaseReference.child("connection");
+    DatabaseReference algotypereference = databaseReference.child("attention");
     BluetoothSPP bt;
     TextView textStatus,motorSpeeds;
     EditText etMessage;
     Menu menu;
+    boolean attention = true;
     int m1=0,m2=0,m3=0,m4=0;
     ProgressBar pb;
 
@@ -117,11 +117,62 @@ public class MainApp extends AppCompatActivity {
                 //textView.setText(text);
                 int result = Integer.parseInt(text);
                 pb.setProgress(result);
-                if(result > 70){
-                    ThrottleUp();
+                if(attention == true) {
+                    if (result > 60) {
+                        ThrottleUp();
+                    }
+                    if (result < 40) {
+                        ThrottleDown();
+                    }
                 }
-                if(result < 50){
-                    ThrottleDown();
+                else{
+                    if (result > 85) {
+                        ThrottleUp();
+                    }
+                    if (result < 80) {
+                        ThrottleDown();
+                    }
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+        connectionTypeReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String text = dataSnapshot.getValue(String.class);
+                //textView.setText(text);
+                int result = Integer.parseInt(text);
+                if(result == 0){
+                    m1=0;
+                    m2=0;
+                    m3=0;
+                    m4=0;
+                    bt.send(m1+","+m2+","+m3+","+m4,false);
+                }
+            }
+
+            @Override
+            public void onCancelled(DatabaseError databaseError) {
+
+            }
+        });
+
+        algotypereference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                String text = dataSnapshot.getValue(String.class);
+                //textView.setText(text);
+                int result = Integer.parseInt(text);
+                if(result == 0){
+                    attention = false;
+                }
+                else{
+                    attention = true;
                 }
             }
 
